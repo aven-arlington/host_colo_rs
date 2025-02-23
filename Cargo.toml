@@ -1,0 +1,10 @@
+[package]
+name = "host_colo_rs"
+version = "0.1.0"
+edition = "2021"
+authors = ["Aven Arlington",]
+description = "Small utility to generate a unique color prompt for any given hostname."
+
+
+[dependencies]
+clap = { version = "4.5", features = ["derive",] }
