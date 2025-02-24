@@ -39,11 +39,11 @@ impl From<u32> for ColorHash {
 impl ColorHash {
     fn code(&self) -> &str {
         match *self {
-            ColorHash::Mint => r"\033[38;2;159;242;143m\]\h",
-            ColorHash::Lightning => r"\033[38;2;255;205;28m\]\h",
-            ColorHash::Delta => r"\033[38;2;111;68;240m\]\h",
-            ColorHash::Bossanova => r"\033[38;2;69;40;89m\]\h",
-            ColorHash::Apricot => r"\033[38;2;244;120;104m\]\h",
+            ColorHash::Mint => "\u{001B}[38;2;159;242;143m",
+            ColorHash::Lightning => "\u{001B}[38;2;255;205;28m",
+            ColorHash::Delta => "\u{001B}[38;2;111;68;240m",
+            ColorHash::Bossanova => "\u{001B}[38;2;69;40;89m",
+            ColorHash::Apricot => "\u{001B}[38;2;244;120;104m",
         }
     }
 }
