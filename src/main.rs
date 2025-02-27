@@ -1,4 +1,5 @@
 use clap::Parser;
+use std::env;
 use std::io::{self, Write};
 
 #[derive(Parser)]
@@ -6,9 +7,10 @@ use std::io::{self, Write};
 #[command(version = "1.0")]
 #[command(about = "Hashes the system's hostname into a colorized command prompt escape sequence", long_about = None)]
 struct Cli {
-    #[arg(short, long, default_value_t = false)]
+    #[arg(short = 'd', long = "debug", default_value_t = false)]
     debug: bool,
-    token: String,
+
+    token: Option<String>,
 }
 
 // mint      #9ff28f (159 242 143)
@@ -37,13 +39,13 @@ impl From<u32> for ColorHash {
     }
 }
 impl ColorHash {
-    fn code(&self) -> &str {
+    fn code(&self) -> String {
         match *self {
-            ColorHash::Mint => "\u{001B}[38;2;159;242;143m",
-            ColorHash::Lightning => "\u{001B}[38;2;255;205;28m",
-            ColorHash::Delta => "\u{001B}[38;2;111;68;240m",
-            ColorHash::Bossanova => "\u{001B}[38;2;69;40;89m",
-            ColorHash::Apricot => "\u{001B}[38;2;244;120;104m",
+            ColorHash::Mint => "\u{001B}[38;2;159;242;143m".to_string(),
+            ColorHash::Lightning => "\u{001B}[38;2;255;205;28m".to_string(),
+            ColorHash::Delta => "\u{001B}[38;2;111;68;240m".to_string(),
+            ColorHash::Bossanova => "\u{001B}[38;2;69;40;89m".to_string(),
+            ColorHash::Apricot => "\u{001B}[38;2;244;120;104m".to_string(),
         }
     }
 }
@@ -53,15 +55,27 @@ impl ColorHash {
 // Where "k" is each character of the hostname key,
 // Converted to a intermediary base36 value, squared, and summed.
 // "m" is the size of the hash table
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Cli::parse();
     let debug = args.debug;
     if debug {
         println!("Debug prints enabled...");
+        println!("Token: {:?}", args.token.is_some());
     }
 
-    let characters: Vec<u32> = args
-        .token
+    let hostname = match args.token {
+        Some(s) => s,
+        None => match env::var("HOSTNAME") {
+            Ok(s) => s,
+            _ => env::var("NAME")?,
+        },
+    };
+
+    if debug {
+        println!("Hostname: {:?}", hostname);
+    }
+
+    let characters: Vec<u32> = hostname
         .to_ascii_lowercase()
         .into_bytes()
         .into_iter()
@@ -83,10 +97,15 @@ fn main() {
             inter_val.pow(2)
         })
         .sum();
+    let mut name_str: String = ColorHash::from(intermediate).code();
+    name_str.push_str(&hostname);
+    name_str.push_str("\u{001b}[0m");
+
     if debug {
-        println!("Color: {:?}", ColorHash::from(intermediate));
+        println!("Color: {:?}", name_str);
     }
 
-    print!("{}", ColorHash::from(intermediate).code());
+    print!("{}", name_str);
     io::stdout().flush().unwrap();
+    Ok(())
 }
