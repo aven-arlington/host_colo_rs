@@ -8,3 +8,4 @@ description = "Small utility to generate a unique color prompt for any given hos
 
 [dependencies]
 clap = { version = "4.5", features = ["derive",] }
+gethostname = "1.*"

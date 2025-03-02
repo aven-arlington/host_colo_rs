@@ -1,17 +1,5 @@
-use clap::Parser;
-use std::env;
+use gethostname::gethostname;
 use std::io::{self, Write};
-
-#[derive(Parser)]
-#[command(name = "HostColoRs")]
-#[command(version = "1.0")]
-#[command(about = "Hashes the system's hostname into a colorized command prompt escape sequence", long_about = None)]
-struct Cli {
-    #[arg(short = 'd', long = "debug", default_value_t = false)]
-    debug: bool,
-
-    token: Option<String>,
-}
 
 // mint      #9ff28f (159 242 143)
 // lightning #ffcd1c (255 205 28)
@@ -38,6 +26,7 @@ impl From<u32> for ColorHash {
         }
     }
 }
+
 impl ColorHash {
     fn code(&self) -> String {
         match *self {
@@ -56,24 +45,9 @@ impl ColorHash {
 // Converted to a intermediary base36 value, squared, and summed.
 // "m" is the size of the hash table
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args = Cli::parse();
-    let debug = args.debug;
-    if debug {
-        println!("Debug prints enabled...");
-        println!("Token: {:?}", args.token.is_some());
-    }
-
-    let hostname = match args.token {
-        Some(s) => s,
-        None => match env::var("HOSTNAME") {
-            Ok(s) => s,
-            _ => env::var("NAME")?,
-        },
-    };
-
-    if debug {
-        println!("Hostname: {:?}", hostname);
-    }
+    let hostname: String = gethostname()
+        .into_string()
+        .expect("Error retrieving hostname");
 
     let characters: Vec<u32> = hostname
         .to_ascii_lowercase()
@@ -97,13 +71,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             inter_val.pow(2)
         })
         .sum();
+
     let mut name_str: String = ColorHash::from(intermediate).code();
     name_str.push_str(&hostname);
     name_str.push_str("\u{001b}[0m");
-
-    if debug {
-        println!("Color: {:?}", name_str);
-    }
 
     print!("{}", name_str);
     io::stdout().flush().unwrap();
